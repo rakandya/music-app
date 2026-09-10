@@ -1424,3 +1424,17 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     }
 }
+
+.play-btn {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.play-btn .pause-icon { display: none; }
+.play-btn.playing .play-icon { display: none; }
+.play-btn.playing .pause-icon { display: block; }

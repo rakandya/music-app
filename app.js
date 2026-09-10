@@ -18,16 +18,100 @@ class MusicApp {
         this.init();
     }
 
-    init() {
+    async init() {
         this.applyTheme();
-        this.loadMockData();
+        await this.loadDataFromAPI();
         this.setupEventListeners();
         this.renderContent();
         this.setupAudio();
     }
 
+    async loadDataFromAPI() {
+        try {
+            // Fetch tracks
+            const tracksRes = await fetch('api/index.php?path=/tracks&limit=50');
+            const tracksData = await tracksRes.json();
+            if (tracksData.status === 'success') {
+                this.tracks = tracksData.data.map(track => ({
+                    id: track.id,
+                    title: track.title,
+                    artist: track.artist_name || track.artist_id,
+                    album: track.album_title || '',
+                    duration: track.duration,
+                    genre: track.genre,
+                    cover: track.cover_color || 'bg-gradient-to-br from-gray-400 to-gray-700',
+                    file_path: track.file_path,
+                    liked: false
+                }));
+                console.log(`Loaded ${this.tracks.length} tracks from API`);
+            } else {
+                console.warn('Failed to load tracks from API, using mock data');
+                this.loadMockData();
+                return;
+            }
+
+            // Fetch artists
+            const artistsRes = await fetch('api/index.php?path=/artists&limit=50');
+            const artistsData = await artistsRes.json();
+            if (artistsData.status === 'success') {
+                this.artists = artistsData.data.map(artist => ({
+                    id: artist.id,
+                    name: artist.name,
+                    genre: artist.genre,
+                    followers: `${Math.floor(artist.followers / 1000000)}M`
+                }));
+                console.log(`Loaded ${this.artists.length} artists from API`);
+            }
+
+            // Fetch playlists (for default user ID 1)
+            const playlistsRes = await fetch('api/index.php?path=/playlists&user_id=1');
+            const playlistsData = await playlistsRes.json();
+            if (playlistsData.status === 'success') {
+                this.playlists = playlistsData.data.map(playlist => ({
+                    id: playlist.id,
+                    name: playlist.name,
+                    description: playlist.description,
+                    trackCount: playlist.track_count || 0,
+                    color: this.getRandomGradientColor(playlist.id)
+                }));
+                console.log(`Loaded ${this.playlists.length} playlists from API`);
+            }
+
+            // Fetch liked tracks for user 1
+            const likedRes = await fetch('api/index.php?path=/liked-tracks&user_id=1');
+            const likedData = await likedRes.json();
+            if (likedData.status === 'success') {
+                likedData.data.forEach(track => {
+                    this.likedTracks.add(track.id);
+                    const foundTrack = this.tracks.find(t => t.id === track.id);
+                    if (foundTrack) foundTrack.liked = true;
+                });
+                console.log(`Loaded ${this.likedTracks.size} liked tracks from API`);
+            }
+        } catch (error) {
+            console.error('Error loading data from API:', error);
+            // Fallback to mock data if API fails
+            this.loadMockData();
+        }
+    }
+
+    getRandomGradientColor(seed) {
+        const colors = [
+            'from-blue-400 to-cyan-400',
+            'from-green-500 to-emerald-500',
+            'from-red-500 to-orange-500',
+            'from-purple-400 to-pink-400',
+            'from-yellow-400 to-amber-500',
+            'from-indigo-400 to-purple-400',
+            'from-teal-400 to-emerald-400',
+            'from-pink-400 to-rose-400'
+        ];
+        return colors[seed % colors.length];
+    }
+
+    // Fallback mock data if API is not available
     loadMockData() {
-        // Mock tracks data
+        console.log('Loading mock data as fallback');
         this.tracks = [
             {
                 id: 1,
@@ -37,6 +121,7 @@ class MusicApp {
                 duration: 203,
                 genre: "Pop",
                 cover: "bg-gradient-to-br from-red-500 to-purple-500",
+                file_path: "assets/audio/track_1.wav",
                 liked: false
             },
             {
@@ -47,6 +132,7 @@ class MusicApp {
                 duration: 142,
                 genre: "Pop",
                 cover: "bg-gradient-to-br from-blue-400 to-pink-400",
+                file_path: "assets/audio/track_2.wav",
                 liked: true
             },
             {
@@ -57,6 +143,7 @@ class MusicApp {
                 duration: 167,
                 genre: "Pop",
                 cover: "bg-gradient-to-br from-yellow-400 to-red-400",
+                file_path: "assets/audio/track_3.wav",
                 liked: false
             },
             {
@@ -67,6 +154,7 @@ class MusicApp {
                 duration: 221,
                 genre: "R&B",
                 cover: "bg-gradient-to-br from-green-400 to-blue-400",
+                file_path: "assets/audio/track_4.wav",
                 liked: true
             },
             {
@@ -77,6 +165,7 @@ class MusicApp {
                 duration: 201,
                 genre: "Pop",
                 cover: "bg-gradient-to-br from-purple-400 to-indigo-400",
+                file_path: "assets/audio/track_5.wav",
                 liked: false
             },
             {
@@ -87,6 +176,7 @@ class MusicApp {
                 duration: 238,
                 genre: "Indie",
                 cover: "bg-gradient-to-br from-orange-400 to-yellow-400",
+                file_path: "assets/audio/track_6.wav",
                 liked: true
             },
             {
@@ -97,6 +187,7 @@ class MusicApp {
                 duration: 211,
                 genre: "Pop",
                 cover: "bg-gradient-to-br from-pink-400 to-rose-400",
+                file_path: "assets/audio/track_7.wav",
                 liked: false
             },
             {
@@ -107,11 +198,11 @@ class MusicApp {
                 duration: 200,
                 genre: "Pop",
                 cover: "bg-gradient-to-br from-teal-400 to-emerald-400",
+                file_path: "assets/audio/track_8.wav",
                 liked: true
             }
         ];
 
-        // Mock artists data
         this.artists = [
             { id: 1, name: "The Weeknd", genre: "Pop/R&B", followers: "58M" },
             { id: 2, name: "Taylor Swift", genre: "Pop", followers: "82M" },
@@ -121,7 +212,6 @@ class MusicApp {
             { id: 6, name: "Ariana Grande", genre: "Pop", followers: "49M" }
         ];
 
-        // Mock playlists
         this.playlists = [
             { id: 1, name: "Liked Songs", description: "Your liked songs", trackCount: 8, color: "bg-gradient-to-r from-green-500 to-emerald-500" },
             { id: 2, name: "Chill Vibes", description: "Relaxing music for your day", trackCount: 12, color: "bg-gradient-to-r from-blue-400 to-cyan-400" },
@@ -130,7 +220,6 @@ class MusicApp {
             { id: 5, name: "Road Trip", description: "Songs for the open road", trackCount: 20, color: "bg-gradient-to-r from-yellow-400 to-amber-500" }
         ];
 
-        // Initialize liked tracks
         this.tracks.filter(track => track.liked).forEach(track => {
             this.likedTracks.add(track.id);
         });
@@ -255,16 +344,50 @@ class MusicApp {
     }
 
     setupAudio() {
-        // Create audio element for demo (in real app, this would be actual audio)
-        this.audio = {
-            currentTime: 0,
-            duration: 203,
-            play: () => this.isPlaying = true,
-            pause: () => this.isPlaying = false,
-            currentTime: 0
-        };
+        // Create real HTML5 audio element
+        this.audio = new Audio();
+        this.audio.volume = this.volume;
+        this.audio.preload = 'metadata';
 
-        // Start progress simulation
+        // Set up audio event listeners
+        this.audio.addEventListener('loadedmetadata', () => {
+            this.duration = this.audio.duration;
+            this.updateProgress();
+        });
+
+        this.audio.addEventListener('timeupdate', () => {
+            this.currentTime = this.audio.currentTime;
+            this.updateProgress();
+        });
+
+        this.audio.addEventListener('ended', () => {
+            if (this.isRepeat) {
+                this.audio.currentTime = 0;
+                this.audio.play().catch(() => {});
+            } else {
+                this.playNext();
+            }
+        });
+
+        this.audio.addEventListener('play', () => {
+            this.isPlaying = true;
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) playBtn.classList.add('playing');
+        });
+
+        this.audio.addEventListener('pause', () => {
+            this.isPlaying = false;
+            const playBtn = document.getElementById('play-btn');
+            if (playBtn) playBtn.classList.remove('playing');
+        });
+
+        this.audio.addEventListener('volumechange', () => {
+            this.volume = this.audio.volume;
+            this.isMuted = this.audio.muted;
+            this.updateVolumeUI();
+        });
+
+        // Start progress simulation for visual updates only
         this.startProgressSimulation();
     }
 
@@ -531,7 +654,7 @@ class MusicApp {
         document.getElementById('modal-overlay').classList.remove('active');
     }
 
-    createPlaylist() {
+    async createPlaylist() {
         const name = document.getElementById('playlist-name-input').value.trim();
         const description = document.getElementById('playlist-desc-input').value.trim();
 
@@ -540,18 +663,38 @@ class MusicApp {
             return;
         }
 
-        const newPlaylist = {
-            id: this.playlists.length + 1,
-            name: name,
-            description: description,
-            trackCount: 0,
-            color: `bg-gradient-to-r from-${['blue', 'green', 'purple', 'red', 'yellow'][Math.floor(Math.random() * 5)]}-400 to-${['cyan', 'emerald', 'pink', 'orange', 'amber'][Math.floor(Math.random() * 5)]}-400`
-        };
+        try {
+            const response = await fetch('api/index.php?path=/playlists', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    description: description,
+                    user_id: 1
+                })
+            });
 
-        this.playlists.push(newPlaylist);
-        this.renderPlaylists();
-        this.hideModal();
-        this.showToast('Playlist created successfully!', 'success');
+            const result = await response.json();
+            if (result.status === 'success') {
+                const newPlaylist = {
+                    id: result.data.id,
+                    name: name,
+                    description: description,
+                    trackCount: 0,
+                    color: this.getRandomGradientColor(result.data.id)
+                };
+
+                this.playlists.push(newPlaylist);
+                this.renderPlaylists();
+                this.hideModal();
+                this.showToast('Playlist created successfully!', 'success');
+            } else {
+                this.showToast('Failed to create playlist: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error creating playlist:', error);
+            this.showToast('Failed to create playlist', 'error');
+        }
     }
 
     showPlaylist(playlist) {
@@ -607,35 +750,51 @@ class MusicApp {
         }
     }
 
-    playTrack(track) {
-        this.currentTrack = track;
-        this.isPlaying = true;
-        this.currentTime = 0;
-        this.duration = track.duration;
-        this.updatePlayerInfo();
-        this.addToHistory(track);
-
-        const playBtn = document.getElementById('play-btn');
-        if (playBtn) {
-            playBtn.classList.add('playing');
+    async playTrack(track) {
+        if (!track || !track.file_path) {
+            this.showToast('No audio file available for this track', 'error');
+            return;
         }
 
-        this.showToast(`Now playing: ${track.title}`, 'success');
+        try {
+            this.currentTrack = track;
+            this.duration = track.duration;
+
+            // Set audio source and play
+            this.audio.src = track.file_path;
+            this.audio.currentTime = 0;
+
+            await this.audio.play();
+
+            this.isPlaying = true;
+            this.currentTime = 0;
+            this.updatePlayerInfo();
+
+            // Add to play history via API
+            await this.addToHistory(track);
+
+            this.showToast(`Now playing: ${track.title}`, 'success');
+        } catch (error) {
+            console.error('Error playing track:', error);
+            this.showToast(`Could not play "${track.title}"`, 'error');
+            this.isPlaying = false;
+        }
     }
 
     togglePlay() {
-        this.isPlaying = !this.isPlaying;
-        const playBtn = document.getElementById('play-btn');
+        if (!this.currentTrack) {
+            // Start playing first track if none selected
+            this.playTrack(this.tracks[0]);
+            return;
+        }
 
-        if (playBtn) {
-            if (this.isPlaying) {
-                playBtn.classList.add('playing');
-                if (!this.currentTrack) {
-                    this.playTrack(this.tracks[0]);
-                }
-            } else {
-                playBtn.classList.remove('playing');
-            }
+        if (this.isPlaying) {
+            this.audio.pause();
+        } else {
+            this.audio.play().catch(error => {
+                console.error('Error resuming playback:', error);
+                this.showToast('Could not resume playback', 'error');
+            });
         }
     }
 
@@ -647,16 +806,16 @@ class MusicApp {
         this.playTrack(this.tracks[prevIndex]);
     }
 
-    playNext() {
+    async playNext() {
         if (!this.currentTrack) return;
 
         if (this.isShuffle) {
             const randomIndex = Math.floor(Math.random() * this.tracks.length);
-            this.playTrack(this.tracks[randomIndex]);
+            await this.playTrack(this.tracks[randomIndex]);
         } else {
             const currentIndex = this.tracks.findIndex(t => t.id === this.currentTrack.id);
             const nextIndex = (currentIndex + 1) % this.tracks.length;
-            this.playTrack(this.tracks[nextIndex]);
+            await this.playTrack(this.tracks[nextIndex]);
         }
     }
 
@@ -684,14 +843,18 @@ class MusicApp {
         this.toggleTrackLike(this.currentTrack.id);
     }
 
-    toggleTrackLike(trackId) {
-        if (this.likedTracks.has(trackId)) {
+    async toggleTrackLike(trackId) {
+        const isLiked = this.likedTracks.has(trackId);
+        const action = isLiked ? 'unlike' : 'like';
+
+        // Update UI immediately (optimistic)
+        if (isLiked) {
             this.likedTracks.delete(trackId);
         } else {
             this.likedTracks.add(trackId);
         }
 
-        // Update UI
+        // Update track object
         const track = this.tracks.find(t => t.id === trackId);
         if (track) {
             track.liked = this.likedTracks.has(trackId);
@@ -703,10 +866,22 @@ class MusicApp {
             likeBtn.classList.toggle('liked', this.likedTracks.has(trackId));
         }
 
+        // Show toast
         this.showToast(
             this.likedTracks.has(trackId) ? 'Added to Liked Songs' : 'Removed from Liked Songs',
             'success'
         );
+
+        // Call API in background
+        try {
+            await fetch(`api/index.php?path=/${action}/${trackId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: 1 })
+            });
+        } catch (error) {
+            console.warn(`Failed to ${action} track:`, error);
+        }
     }
 
     toggleMute() {
@@ -746,8 +921,29 @@ class MusicApp {
     }
 
     seekTo(percent) {
-        this.currentTime = percent * this.duration;
-        this.updateProgress();
+        if (this.audio && this.duration) {
+            this.currentTime = percent * this.duration;
+            this.audio.currentTime = this.currentTime;
+            this.updateProgress();
+        }
+    }
+
+    updateVolumeUI() {
+        const volumeLevel = document.getElementById('volume-level');
+        const volumeHandle = document.getElementById('volume-handle');
+        const volumeBtn = document.getElementById('volume-btn');
+
+        if (volumeLevel) volumeLevel.style.width = `${this.volume * 100}%`;
+        if (volumeHandle) volumeHandle.style.right = `${(1 - this.volume) * 100}%`;
+
+        if (volumeBtn) {
+            volumeBtn.classList.remove('low', 'muted');
+            if (this.isMuted || this.volume === 0) {
+                volumeBtn.classList.add('muted');
+            } else if (this.volume < 0.5) {
+                volumeBtn.classList.add('low');
+            }
+        }
     }
 
     updateProgress() {
@@ -779,10 +975,25 @@ class MusicApp {
         if (likeBtn) likeBtn.classList.toggle('liked', this.likedTracks.has(this.currentTrack.id));
     }
 
-    addToHistory(track) {
+    async addToHistory(track) {
+        if (!track) return;
         this.playHistory.unshift(track);
         if (this.playHistory.length > 10) {
             this.playHistory.pop();
+        }
+
+        // Also send to API
+        try {
+            await fetch('api/index.php?path=/play-history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    track_id: track.id,
+                    user_id: 1
+                })
+            });
+        } catch (error) {
+            console.warn('Failed to add to play history:', error);
         }
     }
 

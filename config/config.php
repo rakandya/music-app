@@ -2,6 +2,9 @@
 /**
  * Database Configuration for Melodify Music App
  */
+// Database / App Configuration
+define('APP_NAME', 'Melodify');
+define('BASE_URL', 'http://localhost/melodify/');
 
 class Database {
     private $host = 'localhost';

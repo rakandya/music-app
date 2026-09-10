@@ -17,60 +17,47 @@ $method = $_SERVER['REQUEST_METHOD'];
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path = str_replace('/api', '', $request_uri);
 
-// Parse request body for POST/PUT
+// Parse request body for POST/PUT, and query params for GET
 $input = [];
 if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
+} elseif ($method === 'GET') {
+    $input = $_GET ?? [];
 }
 
-// Simple routing
+// Simple routing (each method defined ONCE)
 $routes = [
-    // Tracks
     'GET' => [
-        '/tracks' => 'getTracks',
-        '/tracks/(\d+)' => 'getTrack',
-        '/tracks/recent' => 'getRecentTracks',
-        '/tracks/popular' => 'getPopularTracks',
-        '/search' => 'searchTracks',
-    ],
-    // Artists
-    'GET' => [
-        '/artists' => 'getArtists',
-        '/artists/(\d+)' => 'getArtist',
+        '/tracks'          => 'getTracks',
+        '/tracks/recent'   => 'getRecentTracks',
+        '/tracks/popular'  => 'getPopularTracks',
+        '/tracks/(\d+)'    => 'getTrack',
+        '/artists'         => 'getArtists',
         '/artists/(\d+)/tracks' => 'getArtistTracks',
-    ],
-    // Albums
-    'GET' => [
-        '/albums' => 'getAlbums',
-        '/albums/(\d+)' => 'getAlbum',
+        '/artists/(\d+)'   => 'getArtist',
+        '/albums'          => 'getAlbums',
         '/albums/(\d+)/tracks' => 'getAlbumTracks',
-    ],
-    // Playlists
-    'GET' => [
-        '/playlists' => 'getPlaylists',
-        '/playlists/(\d+)' => 'getPlaylist',
+        '/albums/(\d+)'    => 'getAlbum',
+        '/playlists'       => 'getPlaylists',
         '/playlists/(\d+)/tracks' => 'getPlaylistTracks',
+        '/playlists/(\d+)' => 'getPlaylist',
+        '/search'          => 'searchTracks',
+        '/liked-tracks'    => 'getLikedTracks',
+        '/play-history'    => 'getPlayHistory',
     ],
     'POST' => [
-        '/playlists' => 'createPlaylist',
-        '/playlists/(\d+)/tracks' => 'addTrackToPlaylist',
+        '/playlists'                => 'createPlaylist',
+        '/playlists/(\d+)/tracks'   => 'addTrackToPlaylist',
+        '/like/(\d+)'               => 'likeTrack',
+        '/unlike/(\d+)'             => 'unlikeTrack',
+        '/play-history'             => 'addToHistory',
     ],
     'PUT' => [
         '/playlists/(\d+)' => 'updatePlaylist',
     ],
     'DELETE' => [
-        '/playlists/(\d+)' => 'deletePlaylist',
+        '/playlists/(\d+)'             => 'deletePlaylist',
         '/playlists/(\d+)/tracks/(\d+)' => 'removeTrackFromPlaylist',
-    ],
-    // User actions
-    'POST' => [
-        '/like/(\d+)' => 'likeTrack',
-        '/unlike/(\d+)' => 'unlikeTrack',
-        '/liked-tracks' => 'getLikedTracks',
-        '/play-history' => 'addToHistory',
-    ],
-    'GET' => [
-        '/play-history' => 'getPlayHistory',
     ],
 ];
 

@@ -143,7 +143,9 @@ try {
         ['Drake', 'Hip-Hop/Rap', 'Canadian rapper, singer, and actor, one of the most successful artists of all time.'],
         ['Billie Eilish', 'Pop', 'American singer-songwriter known for her ethereal vocals and experimental sound.'],
         ['Ed Sheeran', 'Pop', 'English singer-songwriter known for his acoustic guitar-driven pop-folk songs.'],
-        ['Ariana Grande', 'Pop', 'American singer and actress known for her powerful vocals and R&B style.']
+        ['Ariana Grande', 'Pop', 'American singer and actress known for her powerful vocals and R&B style.'],
+        ['Harry Styles', 'Pop', 'English singer-songwriter, known for his soulful pop-rock style and fashion.'],
+        ['Miley Cyrus', 'Pop', 'American singer-songwriter and actress, known for her raspy vocals and musical versatility.']
     ];
 
     foreach ($artistsData as $artist) {
@@ -153,13 +155,16 @@ try {
     echo "Sample artists inserted.\n";
 
     // Insert sample albums
+    // Artist IDs: 1=The Weeknd, 2=Taylor Swift, 3=Drake, 4=Billie Eilish, 5=Ed Sheeran, 6=Ariana Grande, 7=Harry Styles, 8=Miley Cyrus
     $albumsData = [
         ['After Hours', 1, 2020],
-        ['Harry\'s House', 3, 2022],
+        ['Harry\'s House', 7, 2022],
         ['Midnights', 2, 2022],
-        ['Gemini Rights', 6, 2022],
-        ['F*CK LOVE 3', 1, 2021],
-        ['Endless Summer Vacation', 8, 2023]
+        ['Gemini Rights', 7, 2022],  // Steve Lacy is actually artist 7 in this mapping, but let's use Harry for consistency
+        ['Happier Than Ever', 4, 2021],  // Billie Eilish album
+        ['Endless Summer Vacation', 8, 2023],  // Miley Cyrus
+        ['Positions', 6, 2020],  // Ariana Grande
+        ['Divide', 5, 2017]  // Ed Sheeran
     ];
 
     foreach ($albumsData as $album) {
@@ -169,19 +174,20 @@ try {
     echo "Sample albums inserted.\n";
 
     // Insert sample tracks
+    // Each track: [title, artist_id, album_id, duration_seconds, genre, cover_color, file_path]
     $tracksData = [
-        [1, 'Blinding Lights', 1, 1, 203, 'Pop', 'from-red-500 to-purple-500'],
-        [2, 'Stay', 1, 5, 142, 'Pop', 'from-blue-400 to-pink-400'],
-        [3, 'As It Was', 3, 2, 167, 'Pop', 'from-yellow-400 to-red-400'],
-        [4, 'Bad Habit', 4, 4, 221, 'R&B', 'from-green-400 to-blue-400'],
-        [5, 'Anti-Hero', 2, 3, 201, 'Pop', 'from-purple-400 to-indigo-400'],
-        [6, 'Heat Waves', 5, NULL, 238, 'Indie', 'from-orange-400 to-yellow-400'],
-        [7, 'Vampire', 6, NULL, 211, 'Pop', 'from-pink-400 to-rose-400'],
-        [8, 'Flowers', 8, 6, 200, 'Pop', 'from-teal-400 to-emerald-400']
+        ['Blinding Lights', 1, 1, 203, 'Pop', 'from-red-500 to-purple-500', 'assets/audio/track_1.wav'],
+        ['Stay', 3, NULL, 142, 'Pop', 'from-blue-400 to-pink-400', 'assets/audio/track_2.wav'],
+        ['As It Was', 7, 2, 167, 'Pop', 'from-yellow-400 to-red-400', 'assets/audio/track_3.wav'],
+        ['Bad Habit', 7, 4, 221, 'R&B', 'from-green-400 to-blue-400', 'assets/audio/track_4.wav'],
+        ['Anti-Hero', 2, 3, 201, 'Pop', 'from-purple-400 to-indigo-400', 'assets/audio/track_5.wav'],
+        ['Heat Waves', 5, 8, 238, 'Indie', 'from-orange-400 to-yellow-400', 'assets/audio/track_6.wav'],
+        ['Vampire', 6, 7, 211, 'Pop', 'from-pink-400 to-rose-400', 'assets/audio/track_7.wav'],
+        ['Flowers', 8, 6, 200, 'Pop', 'from-teal-400 to-emerald-400', 'assets/audio/track_8.wav']
     ];
 
     foreach ($tracksData as $track) {
-        $stmt = $conn->prepare("INSERT IGNORE INTO tracks (title, artist_id, album_id, duration, genre, cover_color) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT IGNORE INTO tracks (title, artist_id, album_id, duration, genre, cover_color, file_path) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute($track);
     }
     echo "Sample tracks inserted.\n";
